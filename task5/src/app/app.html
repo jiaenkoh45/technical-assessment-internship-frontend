@@ -26,7 +26,6 @@
   .btn {
     background-color: var(--shade3);
     transition: 0.3s background-color;
-
   }
 
   .btn:active {
@@ -41,39 +40,173 @@
     box-shadow: none;
     outline: none;
   }
+
+  .alert-info {
+    background-color: transparent;
+    border-color: var(--shade1);
+  }
+
+  .dim-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1040;
+  }
+
+  .auth-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    z-index: 1050;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.18);
+  }
 </style>
 
 <main>
+
+  <!-- Task 1 -->
   <nav class="navbar navbar-expand-lg bg-light fixed-top">
     <div class="container-fluid">
-      <a class="navbar-brand me-auto" href="#">Frontend Assessment</a>
 
-      <a href="#" class="login-button">Login</a>
+      <!-- updated to show user name when logged in -->
+      <a class="navbar-brand me-auto" href="#">
+        @if (isLoggedIn) { Welcome, {{ loggedInFirstName }}! }
+        @else { Frontend Assessment }
+      </a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <div class="d-flex ms-auto align-items-center gap-2">
+        @if (isLoggedIn) {
+        <a href="#" class="login-button" (click)="logout(); $event.preventDefault()">Logout</a>
+        } @else {
+        <a href="#" class="login-button" (click)="openLogin(); $event.preventDefault()">Login</a>
+        }
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="#">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">About</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Contact</a>
-          </li>
-        </ul>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </nav>
 
+  <!-- Task 5 Validation Form-->
+  @if (showLogin || showSignup) {
+  <div class="dim-backdrop" (click)="closeOverlay()"></div>
+  }
 
-  <!-- Task 2 here -->
-  <section id="cards" class="container my-5 pt-4">
+  @if (showSignup) {
+  <div class="auth-overlay">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Create Account</h4>
+      <button type="button" class="btn-close" (click)="closeOverlay()"></button>
+    </div>
+
+    @if (signupError) {
+    <div class="alert alert-danger py-2">{{ signupError }}</div>
+    }
+    @if (signupSuccess) {
+    <div class="alert alert-success py-2">{{ signupSuccess }}</div>
+    }
+
+    <div class="row g-2 mb-2">
+      <div class="col">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control" [(ngModel)]="signupFirstName" placeholder="First name">
+      </div>
+      <div class="col">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-control" [(ngModel)]="signupLastName" placeholder="Last name">
+      </div>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" [(ngModel)]="signupEmail" placeholder="Email">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-control" [ngModel]="signupPassword" (ngModelChange)="onPasswordInput($event)"
+        placeholder="Password">
+      <small [class]="{
+          'text-muted': !passwordStrength,
+          'text-danger': passwordStrength === 'Too short' || passwordStrength === 'Too long' || passwordStrength === 'Weak',
+          'text-warning': passwordStrength === 'Medium',
+          'text-success': passwordStrength === 'Strong'
+        }">
+        {{ passwordStrength || 'Must be 8–20 characters long.' }}
+      </small>
+    </div>
+
+    <button class="btn btn-primary w-100 mb-2" (click)="submitSignup()">Sign Up</button>
+    <p class="text-center text-muted mb-0" style="font-size: 0.9rem">
+      Already have an account?
+      <a href="#" (click)="openLogin(); $event.preventDefault()">Log in</a>
+    </p>
+  </div>
+  }
+
+  @if (showLogin) {
+  <div class="auth-overlay">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">Login</h4>
+      <button type="button" class="btn-close" (click)="closeOverlay()"></button>
+    </div>
+
+    @if (loginError) {
+    <div class="alert alert-danger py-2">{{ loginError }}</div>
+    }
+
+    <div class="mb-2">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" [(ngModel)]="loginEmail" placeholder="Email">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-control" [(ngModel)]="loginPassword" placeholder="Password">
+    </div>
+
+    <button class="btn btn-primary w-100 mb-2" (click)="submitLogin()">Login</button>
+    <p class="text-center text-muted mb-0" style="font-size: 0.9rem">
+      Don't have an account?
+      <a href="#" (click)="openSignup(); $event.preventDefault()">Sign up</a>
+    </p>
+  </div>
+  }
+
+  <!-- Task 5 Http call -->
+  <section class="container mt-5 pt-4">
+    @if (weather) {
+    <div class="alert alert-info d-flex align-items-center gap-2">
+      <span style="font-size: 1.5rem">{{ getWeatherIcon(weather.weathercode) }}</span>
+      <span>
+        Current weather in <strong>Kuala Lumpur</strong>:
+        <strong>{{ weather.temperature }}°C</strong>
+      </span>
+    </div>
+    }
+    @if (weatherError) {
+    <div class="alert alert-warning">{{ weatherError }}</div>
+    }
+  </section>
+
+  <!-- Task 2  -->
+  <section id="cards" class="container mb-5 mt-4">
     <h1 class="display-3">Rooms Available</h1>
     <div class="row g-4">
       <div class="col-12 col-md-4">
@@ -83,8 +216,7 @@
           </div>
           <div class="card-body">
             <h5 class="card-title">Forest View</h5>
-            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum quia dolor sit amet,
-              consectetur, adipisci velit..."</p>
+            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum.</p>
             <a href="#" class="btn btn-primary">Details</a>
           </div>
         </div>
@@ -92,12 +224,11 @@
       <div class="col-12 col-md-4">
         <div class="card overflow-hidden">
           <div class="ratio ratio-4x3">
-            <img src="card2.png" class="card-img-top object-fit-cover" alt="Card 1">
+            <img src="card2.png" class="card-img-top object-fit-cover" alt="Card 2">
           </div>
           <div class="card-body">
             <h5 class="card-title">Sea View</h5>
-            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum quia dolor sit amet,
-              consectetur, adipisci velit..."</p>
+            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum.</p>
             <a href="#" class="btn btn-primary">Details</a>
           </div>
         </div>
@@ -105,19 +236,19 @@
       <div class="col-12 col-md-4">
         <div class="card overflow-hidden">
           <div class="ratio ratio-4x3">
-            <img src="card3.png" class="card-img-top object-fit-cover" alt="Card 1">
+            <img src="card3.png" class="card-img-top object-fit-cover" alt="Card 3">
           </div>
           <div class="card-body">
             <h5 class="card-title">Mountain View</h5>
-            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum quia dolor sit amet,
-              consectetur, adipisci velit..."</p>
+            <p class="card-text text-muted">Description: Neque porro quisquam est qui dolorem ipsum.</p>
             <a href="#" class="btn btn-primary">Details</a>
           </div>
         </div>
       </div>
     </div>
   </section>
-  <!-- Task 3 here -->
+
+  <!-- Task 4 -->
   <section id="contact" class="container my-5">
     <h2 class="mb-4">Contact Us</h2>
     <form id="contactForm">
@@ -138,7 +269,7 @@
     </form>
   </section>
 
-  <!-- Task 4: Modal -->
+  <!-- Task 4 -->
   <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -147,8 +278,8 @@
         </div>
         <div class="modal-body">
           <p>Name: <span id="modalName"></span></p>
-          <p>Email:<span id="modalEmail"></span></p>
-          <p>Message:<span id="modalMessage"></span></p>
+          <p>Email: <span id="modalEmail"></span></p>
+          <p>Message: <span id="modalMessage"></span></p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -157,6 +288,7 @@
       </div>
     </div>
   </div>
+
 </main>
 
 <router-outlet />
